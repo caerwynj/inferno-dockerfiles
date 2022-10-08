@@ -1,0 +1,24 @@
+FROM arm32v7/ubuntu:latest
+
+ENV INFERNO=/usr/inferno
+WORKDIR $INFERNO
+COPY acme acme
+COPY fonts fonts
+COPY icons icons
+COPY keydb keydb
+COPY lib lib
+COPY locale locale
+COPY man man
+COPY mnt mnt
+COPY module module
+COPY n n
+COPY services services
+COPY tmp tmp
+COPY usr usr
+COPY Linux Linux
+COPY dis dis
+
+
+ENV PATH="$INFERNO/Linux/arm/bin:${PATH}"
+
+CMD ["emu", "sh"]

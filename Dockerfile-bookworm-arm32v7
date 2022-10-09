@@ -1,0 +1,40 @@
+FROM arm32v7/debian:bookworm AS build
+
+RUN apt-get -y update
+RUN apt-get install -y libx11-dev \
+	libxext-dev \
+	libc6-dev \
+	gcc
+
+ENV INFERNO=/usr/inferno
+COPY . $INFERNO
+WORKDIR $INFERNO
+
+# setup a custom mkconfig
+RUN echo > mkconfig ROOT=$INFERNO  \
+    && echo >>mkconfig TKSTYLE=std \
+    && echo >>mkconfig SYSHOST=Linux  \
+    && echo >>mkconfig SYSTARG=Linux  \
+    && echo >>mkconfig OBJTYPE=arm    \
+    && echo >>mkconfig 'OBJDIR=$SYSTARG/$OBJTYPE'  \
+    && echo >>mkconfig '<$ROOT/mkfiles/mkhost-$SYSHOST' \
+    && echo >>mkconfig '<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE' 
+
+# build code
+#RUN ./makemk.sh
+ENV PATH="$INFERNO/Linux/arm/bin:${PATH}"
+RUN mk clean
+RUN mk install
+RUN mk clean
+
+FROM arm32v7/debian:bookworm
+RUN apt-get -y update
+RUN apt-get install -y libx11-6 \
+	libxext6 
+
+ENV INFERNO=/usr/inferno
+WORKDIR $INFERNO
+COPY --from=build /usr/inferno .
+ENV PATH="$INFERNO/Linux/arm/bin:${PATH}"
+EXPOSE 8080
+CMD ["emu", "svc/httpd/httpd", "-a", "tcp!*!8080"]

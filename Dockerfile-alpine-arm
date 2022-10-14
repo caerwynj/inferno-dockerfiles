@@ -1,10 +1,6 @@
-FROM arm32v7/alpine:latest
+FROM arm32v7/alpine:3.16
 
-RUN apt-get -y update
-RUN apt-get install -y libx11-dev \
-	libxext-dev \
-	libc6-dev \
-	gcc
+RUN apk add build-base libx11-dev libxext-dev linux-headers -t build
 
 ENV INFERNO=/usr/inferno
 COPY . $INFERNO
@@ -21,11 +17,13 @@ RUN echo > mkconfig ROOT=$INFERNO  \
     && echo >>mkconfig '<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE' 
 
 # build code
-#RUN ./makemk.sh
+RUN ./makemk.sh
 ENV PATH="$INFERNO/Linux/arm/bin:${PATH}"
 RUN mk clean
 RUN mk install
+RUN mk clean
 
-EXPOSE 80
-CMD ["/bin/bash"]
+#RUN apk del build
 
+EXPOSE 8080
+CMD ["emu", "svc/httpd/httpd", "-a", "tcp!*!8080"]

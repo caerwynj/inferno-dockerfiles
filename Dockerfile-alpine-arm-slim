@@ -1,23 +1,56 @@
-FROM arm32v7/alpine:latest
+FROM arm32v7/alpine:3.16 AS build
+
+RUN apk add build-base libx11-dev libxext-dev linux-headers -t build
+
+ENV INFERNO=/usr/inferno
+COPY . $INFERNO
+WORKDIR $INFERNO
+
+# setup a custom mkconfig
+RUN echo > mkconfig ROOT=$INFERNO  \
+    && echo >>mkconfig TKSTYLE=std \
+    && echo >>mkconfig SYSHOST=Linux  \
+    && echo >>mkconfig SYSTARG=Linux  \
+    && echo >>mkconfig OBJTYPE=arm    \
+    && echo >>mkconfig 'OBJDIR=$SYSTARG/$OBJTYPE'  \
+    && echo >>mkconfig '<$ROOT/mkfiles/mkhost-$SYSHOST' \
+    && echo >>mkconfig '<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE' 
+
+# build code
+RUN ./makemk.sh
+ENV PATH="$INFERNO/Linux/arm/bin:${PATH}"
+RUN mk clean
+RUN mk install
+RUN cd emu/Linux; mk install "CONF=emu-g"
+RUN mk clean
+
+
+FROM arm32v7/alpine:3.16
+
+RUN apk add libx11 libxext
+
+RUN addgroup -S inferno
+RUN adduser --disabled-password --ingroup inferno inferno
+USER inferno
 
 ENV INFERNO=/usr/inferno
 WORKDIR $INFERNO
-COPY acme acme
-COPY fonts fonts
-COPY icons icons
-COPY keydb keydb
-COPY lib lib
-COPY locale locale
-COPY man man
-COPY mnt mnt
-COPY module module
-COPY n n
-COPY services services
-COPY tmp tmp
-COPY usr usr
-COPY Linux Linux
-COPY dis dis
+COPY --chown=inferno acme acme
+#COPY fonts fonts
+#COPY icons icons
+COPY --chown=inferno keydb keydb
+COPY --chown=inferno lib lib
+COPY --chown=inferno locale locale
+#COPY man man
+COPY --chown=inferno mnt mnt
+COPY --chown=inferno module module
+COPY --chown=inferno n n
+COPY --chown=inferno services services
+COPY --chown=inferno tmp tmp
+COPY --chown=inferno usr/inferno usr/inferno
+COPY --chown=inferno --from=build /usr/inferno/Linux/arm/bin/emu* /usr/inferno/Linux/arm/bin/limbo /usr/inferno/Linux/arm/bin/mk Linux/arm/bin/
+COPY --chown=inferno dis dis
 
 ENV PATH="$INFERNO/Linux/arm/bin:${PATH}"
-
-CMD ["emu", "sh"]
+EXPOSE 8080
+CMD ["emu", "svc/httpd/httpd", "-a", "tcp!*!8080"]

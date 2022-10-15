@@ -1,9 +1,9 @@
-FROM arm32v7/alpine:3.16 AS build
+FROM i386/alpine:3.16 AS build
 
 RUN apk add build-base libx11-dev libxext-dev linux-headers -t build
 
 ENV INFERNO=/usr/inferno
-ENV objtype=arm
+ENV objtype=386
 
 COPY . $INFERNO
 WORKDIR $INFERNO
@@ -27,7 +27,7 @@ RUN cd emu/Linux; mk install "CONF=emu-g"
 RUN mk clean
 
 
-FROM arm32v7/alpine:3.16
+FROM i386/alpine:3.16
 
 RUN apk add libx11 libxext
 
@@ -36,7 +36,7 @@ RUN adduser --disabled-password --ingroup inferno inferno
 USER inferno
 
 ENV INFERNO=/usr/inferno
-ENV objtype=arm
+ENV objtype=386
 WORKDIR $INFERNO
 COPY --chown=inferno acme acme
 #COPY fonts fonts

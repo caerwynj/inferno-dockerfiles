@@ -1,0 +1,32 @@
+services:
+        signer:
+                image: caerwyn/inferno-os:alpine-slim
+                command: emu sh svc/auth
+                volumes:
+                        - keydb:/usr/inferno/keydb
+                        - /home/pi/github/inferno-contrib:/usr/inferno/contrib
+                networks:
+                        - inf
+        web:
+                image: caerwyn/inferno-os:alpine-slim
+                networks: -inf
+                volumes_from:
+                        - styx
+                command: emu sh svc/httpd/httpd
+        registry:
+                image: caerwyn/inferno-os:alpine-slim
+                networks:
+                        - inf
+                volumes_from:
+                        - styx
+                command: emu sh svc/registry
+        styx:
+                image: caerwyn/inferno-os:alpine-slim
+                volumes:
+                        - /home/pi/github/inferno-contrib:/usr/inferno/contrib
+                        - keyring:/usr/inferno/usr/inferno/keyring
+                networks:
+                        - inf
+                command: emu sh svc/net
+networks:
+        inf:

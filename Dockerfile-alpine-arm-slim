@@ -56,4 +56,5 @@ COPY --chown=inferno dis dis
 
 ENV PATH="$INFERNO/Linux/${objtype}/bin:${PATH}"
 EXPOSE 8080
-CMD ["emu", "svc/httpd/httpd", "-a", "tcp!*!8080"]
+ENTRYPOINT ["emu"]
+CMD ["svc/httpd/httpd", "-a", "tcp!*!8080"]

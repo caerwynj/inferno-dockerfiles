@@ -25,5 +25,6 @@ RUN mk clean
 
 #RUN apk del build
 
-EXPOSE 8080
-CMD ["emu", "svc/httpd/httpd", "-a", "tcp!*!8080"]
+
+EXPOSE 6666
+ENTRYPOINT ["emu"]

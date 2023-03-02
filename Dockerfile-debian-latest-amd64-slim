@@ -1,9 +1,10 @@
-FROM i386/alpine:3.16 AS build
+FROM amd64/debian:latest AS build
 
-RUN apk add build-base libx11-dev libxext-dev linux-headers -t build
+RUN apt-get update -y
+RUN apt-get install -y libx11-dev libxext-dev libc6-dev gcc 
 
 ENV INFERNO=/usr/inferno
-ENV objtype=386
+ENV objtype=amd64
 
 COPY . $INFERNO
 WORKDIR $INFERNO
@@ -24,20 +25,21 @@ ENV PATH="$INFERNO/Linux/${objtype}/bin:${PATH}"
 RUN mk clean
 RUN mk mkdirs
 RUN mk install
-# RUN cd emu/Linux; mk install "CONF=emu-g"
+#RUN cd emu/Linux; mk install "CONF=emu"
 RUN mk clean
 
 
-FROM i386/alpine:3.16
+FROM amd64/debian:latest
 
-RUN apk add libx11 libxext
+RUN apt-get update -y
+RUN apt-get install -y libx11-6 libxext6
 
-RUN addgroup -S inferno
+RUN addgroup inferno
 RUN adduser --disabled-password --ingroup inferno inferno
 USER inferno
 
 ENV INFERNO=/usr/inferno
-ENV objtype=386
+ENV objtype=amd64
 WORKDIR $INFERNO
 COPY --chown=inferno acme acme
 #COPY fonts fonts

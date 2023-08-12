@@ -1,0 +1,37 @@
+FROM arm64v8/alpine:latest AS build
+
+RUN apk add build-base libx11-dev libxext-dev linux-headers -t build
+
+ENV INFERNO=/usr/inferno
+ENV objtype=arm64
+
+COPY . $INFERNO
+WORKDIR $INFERNO
+
+# setup a custom mkconfig
+RUN echo > mkconfig ROOT=$INFERNO  \
+    && echo >>mkconfig TKSTYLE=std \
+    && echo >>mkconfig SYSHOST=Linux  \
+    && echo >>mkconfig SYSTARG=Linux  \
+    && echo >>mkconfig OBJTYPE=${objtype}    \
+    && echo >>mkconfig 'OBJDIR=$SYSTARG/$OBJTYPE'  \
+    && echo >>mkconfig '<$ROOT/mkfiles/mkhost-$SYSHOST' \
+    && echo >>mkconfig '<$ROOT/mkfiles/mkfile-$SYSTARG-$OBJTYPE' 
+
+# build code
+RUN ./makemk.sh
+ENV PATH="$INFERNO/Linux/${objtype}/bin:${PATH}"
+RUN mk clean
+RUN mk install
+RUN cd emu/Linux; mk install "CONF=emu-g"
+RUN mk clean
+
+RUN addgroup -S inferno
+RUN adduser --disabled-password --ingroup inferno inferno
+RUN chown -R inferno:inferno /usr/inferno
+
+USER inferno
+
+
+EXPOSE 6666
+ENTRYPOINT ["emu"]
